@@ -1,74 +1,40 @@
 #!/usr/bin/python3
-import math
-from numpy import mat
 from selenium import webdriver
 from time import sleep
-from decouple import config
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
-import pandas as pd
-import warnings
-from difflib import SequenceMatcher as sq
-
-###---------REMOVE THE DEPRECATIONWARNING---------###
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 
 def FastFinger():
+    service = Service(ChromeDriverManager().install())
     chrome_options = Options()
-    #chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(chrome_options=chrome_options)
-    driver.get("https://10fastfingers.com/typing-test/english")
+    chrome_options.add_argument('--ignore-certificate-errors-spki-list')
+    chrome_options.add_argument(f"--user-data-dir=C:\\Users\\bezie\\AppData\\Local\\Google\\Chrome\\User Data\\Default")
+    chrome_options.add_argument('log-level=3')
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver.get("https://10fastfingers.com/typing-test")
     driver.set_page_load_timeout(30)
 
     driver.maximize_window()
-    sleep(2)
-    words = driver.find_element_by_id("words")
-    words = words.text
-    temp = 0
-    sentence = []
-    while (temp < 3):
-        words = words.replace("  ", " ")
-        print(words, "\n")
-        for element in words:
-            driver.find_element_by_id("inputfield").send_keys(element)
-        WordsTemp = driver.find_element_by_id("row1")
-        words = WordsTemp.text.replace(words, "")
-        if (words[0] == " "):
-            a_list = list(words)
-            a_list[0] = ""
-            words = "".join(a_list)
-            driver.find_element_by_id("inputfield").send_keys(" ")
-        #print(words)
-        temp += 1
-        sentence.append(words)
-    words = driver.find_element_by_id("words")
-    words = words.text
-    while (1):
-        print ("words: ", words)
-        for element in sentence:
-            if (sentence[-1] != element):
-                match = sq(None, element, words).find_longest_match(0, len(element), 0, len(words))
-                #print(match)
-                if (match.size > 15):
-                    words = words[match.b+match.size:]
-        print ("words: ", words)
-        #words = words.replace("  ", " ")
-        for element in words:
-           driver.find_element_by_id("inputfield").send_keys(element)
-        WordsTemp = driver.find_element_by_id("row1")
-        words = WordsTemp.text
-        if (words[0] == " "):
-            a_list = list(words)
-            a_list[0] = ""
-            words = "".join(a_list)
-            driver.find_element_by_id("inputfield").send_keys(" ")
-        words = words.replace("  ", " ")
-        sentence.append(words)
-        #print(words)
-    sleep(300)
+    sleep(4)
+    Words = driver.find_elements(By.XPATH, "//div[@id='row1']/span")
+    Words = [i.text for i in Words]
+    temp = [""] * len(Words)
+    lenDone = 0
+    InputField = driver.find_element(By.ID, "inputfield")
+    for elem in Words:
+        if (elem != ''):
+            InputField.send_keys(elem + " ")
+        elif (temp[lenDone] == ''):
+            temp = driver.find_elements(By.XPATH, "//div[@id='row1']/span")
+            temp = [i.text for i in temp]
+            InputField.send_keys(temp[lenDone] + " ")
+        else:
+            InputField.send_keys(temp[lenDone] + " ")
+        lenDone += 1
+    sleep(1000)
+
 def main():
     FastFinger()
 
